@@ -1,0 +1,7 @@
+testing/*
+*.nbc
+*.pyc
+*.nbi
+.vscode/settings.json
+*.pkl
+saved/*
