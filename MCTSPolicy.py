@@ -10,7 +10,7 @@ from policy import Policy, Estimator, Rollout
 INIT_VALUE = 1e9
 
 
-@jit
+@jit(nopython=True)
 def get_best_action(
     cpuct: float,
     priors: np.ndarray,
@@ -21,7 +21,7 @@ def get_best_action(
     return np.argmax(ucb)
 
 
-@jit
+@jit(nopython=True)
 def update(value: float, action: int, visits: np.ndarray, qvalues: np.ndarray):
     n = visits[action]
     visits[action] += 1

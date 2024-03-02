@@ -3,7 +3,7 @@ from nbTetris import Tetris, Block, Board, T
 import numpy as np
 import pickle
 from typing import Callable, List, Dict, Optional, Tuple
-from torch.multiprocessing import Pool
+from multiprocessing import Pool
 import random
 import os
 import gc
@@ -227,13 +227,11 @@ def generate_rollout(
     actions = []
     rewards = []
     policies = []
-
     prev_score = t.getScore()
     it = 0
     while not t.end and it < truncate_length:
         output_policy = policy(t, temp=temp, eps=eps)
         action = np.random.choice(np.arange(Tetris.num_actions), p=output_policy)
-
         states.append(t.clone())
         actions.append(action)
         policies.append(output_policy)
@@ -255,6 +253,7 @@ def generate_rollout(
 
 
 def save_rollout(rollout: Rollout, save_path: str):
+
     def convertT(t: Tetris):
         t = t.clone()
         t.tetris = save_jitclass(t.tetris)

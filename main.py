@@ -15,8 +15,8 @@ board_size = (22, 10)
 actions_per_drop = 2
 
 # MCTS Policy settings
-cpuct = 4
-num_sims = 500
+cpuct = 0.5
+num_sims = 400
 time_allowed = float("inf")
 td_alpha = 0.9
 gamma = 0.995
@@ -36,21 +36,18 @@ if use_cnn:
     lr = 0.001
 else:
     # DNN estimator settings
-    lr = 0.00025
+    lr = 0.0001
     inp_shape = board_size
-    value_hidden_sizes = [
-        96,
-    ]
-    policy_hidden_sizes = [
-        64,
-    ]
+    initial_hidden = 2048
+    value_hidden_sizes = [64, 64]
+    policy_hidden_sizes = [64, 64]
 
 # train settings
 device = "cpu"
 save_dir = "./saved"
 iters = 5000
 rollouts_per_iter = 100
-num_processes = 16
+num_processes = 8
 truncate_length = 20000
 batch_size = 32
 save_freq = 1
@@ -88,6 +85,7 @@ if use_cnn:
 else:
     params["lr"] = lr
     params["inp_shape"] = inp_shape
+    params["initial_hidden"] = initial_hidden
     params["value_hidden_sizes"] = value_hidden_sizes
     params["policy_hidden_sizes"] = policy_hidden_sizes
 
@@ -99,7 +97,12 @@ def policy_factory():
         )
     else:
         network = estimators.get_dnn_estimator(
-            inp_shape, value_hidden_sizes, policy_hidden_sizes, lr, device
+            inp_shape,
+            initial_hidden,
+            value_hidden_sizes,
+            policy_hidden_sizes,
+            lr,
+            device,
         )
     return MCTSPolicy.MCTSPolicy(
         network,
@@ -114,25 +117,7 @@ def policy_factory():
     )
 
 
-load_path = "./saved/1681867877.6403456_jankloss/policy"
-# load_path = None
-
-if __name__ == "__main__" and load_path:
-    num_sims = 1000
-    value_leaves_only = False
-    cpuct = 16
-    gamma = 0.998
-    policy = policy_factory()
-    policy.load(load_path)
-    while True:
-        tetris = Tetris(board_size, actions_per_drop)
-        r = generate_rollout(policy, None, tetris, 0.1, 0, 10000)
-        save_rollout(r, "./rollout")
-        print("total reward:", sum(r.rewards))
-        print("length of rollout:", len(r.rewards))
-        print("lines cleared:", tetris.getLines(), "\n")
-
-if __name__ == "__main__" and not load_path:
+if __name__ == "__main__":
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
     par_save_dir = save_dir
@@ -161,7 +146,7 @@ if __name__ == "__main__" and not load_path:
     dummy_tetris = Tetris(board_size, actions_per_drop)
     dummy_policy(dummy_tetris)
     start = time.time()
-    n = 10
+    n = 3
     for _ in range(n):
         dummy_policy(dummy_tetris)
     end = time.time()

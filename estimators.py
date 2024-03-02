@@ -48,11 +48,16 @@ class CNN(nn.Module):
 
 class DNN(nn.Module):
     def __init__(
-        self, inp_shape, value_hidden_sizes: List[int], policy_hidden_sizes: List[int]
+        self,
+        inp_shape,
+        initial_hidden: int,
+        value_hidden_sizes: List[int],
+        policy_hidden_sizes: List[int],
     ):
         super().__init__()
-        value_hidden_sizes = [int(np.prod(inp_shape))] + value_hidden_sizes
-        policy_hidden_sizes = [int(np.prod(inp_shape))] + policy_hidden_sizes
+        value_hidden_sizes = [initial_hidden] + value_hidden_sizes
+        policy_hidden_sizes = [initial_hidden] + policy_hidden_sizes
+        self.shared_first_layer = nn.Linear(int(np.prod(inp_shape)) * 2, initial_hidden)
         self.value_layers = nn.ModuleList(
             [
                 nn.Linear(value_hidden_sizes[i], value_hidden_sizes[i + 1])
@@ -75,6 +80,8 @@ class DNN(nn.Module):
             x = torch.flatten(x, 1)
         else:
             x = torch.flatten(x)
+        x = torch.cat([(x == 1), (x == -1)], dim=-1).to(torch.float32)
+        x = self.relu(self.shared_first_layer(x))
         p = x
         v = x
         for l in self.value_layers:
@@ -167,10 +174,10 @@ class EstimatorImpl(Estimator):
 
     def load(self, file_path):
         data = torch.load(file_path)
-        self.net.load_state_dict(data["net"])
-        self.net.eval()
-        self.optimizer.load_state_dict(data["opt"])
-        self.example_cnt = data["example_cnt"]
+        # self.net.load_state_dict(data["net"])
+        # self.net.eval()
+        # self.optimizer.load_state_dict(data["opt"])
+        # self.example_cnt = data["example_cnt"]
 
 
 def get_cnn_estimator(
@@ -180,6 +187,10 @@ def get_cnn_estimator(
     return EstimatorImpl(torch.jit.script(net), lr, device)
 
 
-def get_dnn_estimator(inp_shape, value_hidden_sizes, policy_hidden_sizes, lr, device):
-    net = DNN(inp_shape, value_hidden_sizes, policy_hidden_sizes).to(device)
+def get_dnn_estimator(
+    inp_shape, intitial_hidden, value_hidden_sizes, policy_hidden_sizes, lr, device
+):
+    net = DNN(inp_shape, intitial_hidden, value_hidden_sizes, policy_hidden_sizes).to(
+        device
+    )
     return EstimatorImpl(torch.jit.script(net), lr, device)
