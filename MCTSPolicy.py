@@ -147,8 +147,6 @@ class MCTSPolicy(Policy):
             for _ in range(self.n_epochs):
                 for i in range(0, len(states), batch_size):
                     end = min(i + batch_size, len(states))
-                    if len(states[i:end]) < batch_size // 4:
-                        continue
                     self.net.accumulate_gradient(
                         states[i:end],
                         actions[i:end],
@@ -160,10 +158,11 @@ class MCTSPolicy(Policy):
             value_over_replays.append(np.mean(values))
             stddev_value_over_replays.append(np.std(values))
 
-        if "log" in kwargs:
-            kwargs["log"]("MSE over replays: {0}".format(losses_over_replays))
-            kwargs["log"]("avg value over replays: {0}".format(value_over_replays))
-            kwargs["log"]("stddev value: {0}".format(stddev_value_over_replays))
+        # if "log" in kwargs:
+        #     print(losses)
+        #     kwargs["log"]("MSE over replays: {0}".format(losses_over_replays))
+        #     kwargs["log"]("avg value over replays: {0}".format(value_over_replays))
+        #     kwargs["log"]("stddev value: {0}".format(stddev_value_over_replays))
 
     def save(self, file_path: str) -> None:
         self.net.save(file_path)

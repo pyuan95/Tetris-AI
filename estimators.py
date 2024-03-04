@@ -90,6 +90,7 @@ class DNN(nn.Module):
             p = self.relu(l(p))
         value = self.value(v)
         policy = self.softmax(self.policy(p))
+
         return value, policy
 
 
@@ -174,10 +175,10 @@ class EstimatorImpl(Estimator):
 
     def load(self, file_path):
         data = torch.load(file_path)
-        # self.net.load_state_dict(data["net"])
-        # self.net.eval()
-        # self.optimizer.load_state_dict(data["opt"])
-        # self.example_cnt = data["example_cnt"]
+        self.net.load_state_dict(data["net"])
+        self.net.eval()
+        self.optimizer.load_state_dict(data["opt"])
+        self.example_cnt = data["example_cnt"]
 
 
 def get_cnn_estimator(
